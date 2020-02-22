@@ -19,7 +19,7 @@ def render_file(org=None, period=None, cost_type=None):
 #템플릿 다운로드
 @app.route('/download')
 def download_template():
-    file_name = "사업계획_업로드_템플릿.xlsx"
+    file_name = "business_plan_upload_template.xlsx"
     return send_file(file_name, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', attachment_filename='사업계획_업로드.xlsx', as_attachment=True)
 
 #파일 업로드 처리
