@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Plan Expense Upload</title>
+</head>
+<body>
+    <p>Business plan upload page</p>
+    <p></p>
+    <button type="button" onclick="window.location.href='{{ url_for( 'download_template' , table='Y' ) }}';">이 곳을 눌러 사업계획 템플릿 다운로드하세요.</button>
+    <p></p>
+    <table  border="2">
+        <tr>
+            <th>Organization</th>
+            <td width="200">{{org}}</td>
+        </tr>
+        <tr>
+            <th>Period</th>
+            <td width="200">{{period}}</td>
+        </tr>
+        <tr>
+            <th>Cost Type</th>
+            <td width="200">{{cost_type}}</td>
+        </tr>
+    </table>
+    <p></p>
+    <p></p>
+    <form action = "/fileupload" method = "POST" enctype="multipart/form-data">
+        <input type = "hidden" name = "organization" value="{{org}}" />
+        <input type = "hidden" name = "period" value="{{period}}" />
+        <input type = "hidden" name = "cost_type" value="{{cost_type}}" />
+        <input type = "file" name = "file" />
+        <input type = "submit"/>
+    </form>
+</body>
+</html>
