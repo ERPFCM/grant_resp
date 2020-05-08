@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Business Plan Expense Upload</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <img src="/static/pmo_tray.png">
     <p>Business plan upload page</p>
     <p></p>
     <button type="button" onclick="window.location.href='{{ url_for( 'download_template' , table='Y' ) }}';">이 곳을 눌러 사업계획 템플릿 다운로드하세요.</button>
@@ -30,7 +32,9 @@
         <input type = "hidden" name = "period" value="{{period}}" />
         <input type = "hidden" name = "cost_type" value="{{cost_type}}" />
         <input type = "file" name = "file" />
-        <input type = "submit"/>
+        <input type = "submit" value = "Upload"/>
     </form>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
 </body>
 </html>

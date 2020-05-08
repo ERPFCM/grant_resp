@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <title>Verify Expenses</title>
+    <head>
+<!--        <div class="container">-->
+<!--          <div class="row">-->
+<!--            <div class="col-m-4" id="sticky-sidebar">-->
+<!--              Sidebar-->
+<!--            </div>-->
+<!--            <div class="col-m-8" id="main">-->
+<!--              Main Area-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+        <style>
+            #container {
+<!--                background: yellow;-->
+                height:250px;
+            }
+            #item {
+                border: 1px solid #cccccc;
+                width:50%;
+                margin : 0 auto;
+            }
+        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+<!--        <link href="/static/css/bootstrap.css" rel="stylesheet">-->
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Custom styles for this template -->
+<!--        <link href="/static/css/starter-template.css" rel="stylesheet">-->
+
+
+    </head>
+    <body>
+        <p></p>
+        <h3><div class="row text-center font-weight-bold" style="width: 100%">사업 계획 예산 검증</div></h3>
+        <p></p>
+        <div class="row text-center" style="width: 100%">
+        <form class="form-inline" method="POST" action="{{ url_for('verify') }}">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-addon">ORG</span>
+                    <select name="org_select" class="selectpicker form-control">
+<!--                        <option value="ORG">P14</option>-->
+                        {% for o in org_list %}
+                        <option value="{{ o[0] }}">{{ o[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-addon">PERIOD</span>
+                    <select name="period_select" class="selectpicker form-control">
+<!--                        <option value="PERIOD">2001</option>-->
+                        {% for o in period_list %}
+                        <option value="{{ o[0] }}">{{ o[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-addon">COST TYPE</span>
+                    <select name="cost_type_select" class="selectpicker form-control">
+<!--                        <option value="COST_TYPE">BPST</option>-->
+                        {% for o in cost_type_list %}
+                        <option value="{{ o[0] }}">{{ o[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-addon">CALENDAR</span>
+                    <select name="calendar_select" class="selectpicker form-control">
+<!--                        <option value="COST_TYPE">BPST</option>-->
+                        {% for o in calendar_list %}
+                        <option value="{{ o[0] }}">{{ o[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-default">GO</button>
+        </form>
+        </div>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>ORG</th>
+                <th>Item</th>
+                <th>__________________Description_________________</th>
+                <th>_GL Class_</th>
+                <th>계획수량(가공)</th>
+                <th>계획수량(간접)</th>
+                <th>표준원가</th>
+                <th>원재료비</th>
+                <th>포장재비</th>
+                <th>직접노무</th>
+                <th>기계가동</th>
+                <th>변동소모</th>
+                <th>고정노무</th>
+                <th>생산경비</th>
+                <th>복리후생</th>
+                <th>감가상각</th>
+                <th>직접노무 금액</th>
+                <th>기계가동 금액</th>
+                <th>변동소모 금액</th>
+                <th>고정노무 금액</th>
+                <th>생산경비 금액</th>
+                <th>복리후생 금액</th>
+                <th>감가상각 금액</th>
+            </tr>
+            </thead>
+        {% for obj in data_list%}
+        <tbody>
+            <tr>
+                <td>{{obj[0]}}</td>
+                <td>{{obj[1]}}</td>
+                <td>{{obj[2]}}</td>
+                <td>{{obj[3]}}</td>
+                <td>{{obj[5]}}</td>
+                <td>{{obj[6]}}</td>
+                <td>{{obj[7]}}</td>
+                <td>{{obj[8]}}</td>
+                <td>{{obj[9]}}</td>
+                <td>{{obj[10]}}</td>
+                <td>{{obj[11]}}</td>
+                <td>{{obj[12]}}</td>
+                <td>{{obj[13]}}</td>
+                <td>{{obj[14]}}</td>
+                <td>{{obj[15]}}</td>
+                <td>{{obj[16]}}</td>
+                <td>{{obj[17]}}</td>
+                <td>{{obj[18]}}</td>
+                <td>{{obj[19]}}</td>
+                <td>{{obj[20]}}</td>
+                <td>{{obj[21]}}</td>
+                <td>{{obj[22]}}</td>
+                <td>{{obj[23]}}</td>
+            </tr>
+        </tbody>
+        {% endfor %}
+        </table>
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="/static/js/jquery.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
+    </body>
+</html>
