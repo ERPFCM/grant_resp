@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, send_file
 from werkzeug.utils import secure_filename
-import xlrd, cx_Oracle, config as cfg, pandas as pd, numpy as np, re, os, time
+import xlrd, cx_Oracle, config as cfg, pandas as pd, numpy as np, re, os, time, openpyxl
 app = Flask(__name__)
-
+os_path_prefix = "D:/python/BusinessExpense/"
+# export_file_name = ''
 #업로드 HTML 렌더링
 @app.route('/upload')
 def render_file(org=None, period=None, cost_type=None):
@@ -22,6 +23,32 @@ def download_template():
     file_name = "business_plan_upload_template.xlsx"
     return send_file(file_name, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', attachment_filename='사업계획_업로드.xlsx', as_attachment=True)
 
+@app.route('/export')
+def export_file():
+    conn = cx_Oracle.connect(cfg.username, cfg.password, cfg.dsn, encoding=cfg.encoding)
+    export_data = pd.read_sql(verifysql, conn, None, True, verify_param)
+    export_file_name = "Export" + time.strftime('%Y%m%d%H%M%S', time.localtime()) + ".xlsx"
+    # global export_file
+    export_file = os.path.join(os_path_prefix, export_file_name)
+    export_data.to_excel(export_file,  # directory and file name to write
+                         sheet_name="Sheet1",
+                         na_rep='',
+                         float_format="%.9f",
+                         header=True,
+                         # columns = ["group", "value_1", "value_2"], # if header is False
+                         index=False,
+                         # index_label="id",
+                         startrow=1,
+                         startcol=1,
+                         # engine = 'xlsxwriter',
+                         freeze_panes=(2, 0)
+                         )
+    # print(export_data)
+    file_name = export_file
+    # print(file_name)
+    conn.close()
+    return send_file(file_name, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', attachment_filename=file_name, as_attachment=True)
+
 #파일 업로드 처리
 @app.route('/fileupload', methods = ['GET','POST'])
 def upload_file():
@@ -31,8 +58,8 @@ def upload_file():
         period = request.form['period']
         cost_type = request.form['cost_type']
         #저장할 경로 + 파일명
-        file_name = "D:/python/BusinessExpense/" + time.strftime('%Y%m%d%H%M%S', time.localtime()) + f.filename
-        # file_name = "/usr/tmp/" + time.strftime('%Y%m%d%H%M%S', time.localtime()) + f.filename
+        file_name = os_path_prefix + time.strftime('%Y%m%d%H%M%S', time.localtime()) + f.filename
+        # file_name = os_path_prefix + time.strftime('%Y%m%d%H%M%S', time.localtime()) + f.filename
         f.save(file_name)
         #f.save("D:/python/BusinessExpense/" + f.filename)
         print(file_name)
@@ -241,34 +268,35 @@ def verify():
     # dict = {'organization':org, 'period':period, 'cost_type':cost_type}
     # print(dict)
     # print(org + ' ' + period + ' ' + cost_type)
-    conn = cx_Oracle.connect(cfg.username, cfg.password, cfg.dsn, encoding=cfg.encoding)
-    cursor = conn.cursor()
+    # conn = cx_Oracle.connect(cfg.username, cfg.password, cfg.dsn, encoding=cfg.encoding)
+    # cursor = conn.cursor()
     # print(cursor)
+    global verifysql
     verifysql="""
         select decode(org, null, '합계', org) org
          , item
          , description
          , gl_cls
          , inventory_item_id
-         , quantity1
-         , ind_qty
-         , std_cost
-         , c1
-         , c2
-         , c3
-         , c4
-         , c5
-         , c6
-         , c7
-         , c8
-         , c9
-         , sum(c3s) c3s
-         , sum(c4s) c4s
-         , sum(c5s) c5s
-         , sum(c6s) c6s
-         , sum(c7s) c7s
-         , sum(c8s) c8s
-         , sum(c9s) c9s
+         , quantity1 "계획수량(가공비)"
+         , ind_qty "계획수량(간접비)"
+         , std_cost "표준원가"
+         , c1 "원재료비"
+         , c2 "포장재비"
+         , c3 "직접노무"
+         , c4 "기계가동"
+         , c5 "변동소모"
+         , c6 "고정노무"
+         , c7 "생산경비"
+         , c8 "복리후생"
+         , c9 "감가상각"
+         , sum(c3s) "직접노무금액"
+         , sum(c4s) "기계가동금액"
+         , sum(c5s) "변동소모금액"
+         , sum(c6s) "고정노무금액"
+         , sum(c7s) "생산경비금액"
+         , sum(c8s) "복리후생금액"
+         , sum(c9s) "감가상각금액"
         from   (select org
                      , item
                      , description
@@ -426,11 +454,87 @@ def verify():
                 group by pev.organization_id
                      , pev.cost_cmpntcls_id) 
     """
-    t = (org, period, cost_type, calendar)
-    cursor.execute(verifysql, t)
+    global verify_param
+    verify_param = (org, period, cost_type, calendar)
+    cursor.execute(verifysql, verify_param)
     verifydata = cursor.fetchall()
-    print(t)
-    return render_template('verify.html', org_list=org_list, cost_type_list=cost_type_list, period_list=period_list, calendar_list=calendar_list, data_list = verifydata)
+    print(verifydata)
+    # verifydata = verifydata.fillna(0)
+    print(len(verifydata))
+    direct_labor_amt = 0
+    direct_machine_amt = 0
+    var_consume_amt = 0
+    fixed_labor_amt = 0
+    mfg_expense_amt = 0
+    emp_benefit_amt = 0
+    depreciation_amt = 0
+    for idx in range(len(verifydata)-2):
+        if verifydata[idx][17] is None:
+            direct_labor_amt = direct_labor_amt + 0
+        else:
+            direct_labor_amt = direct_labor_amt + verifydata[idx][17]
+        if verifydata[idx][18] is None:
+            direct_machine_amt = direct_machine_amt + 0
+        else:
+            direct_machine_amt = direct_machine_amt + verifydata[idx][18]
+        if verifydata[idx][19] is None:
+            var_consume_amt = var_consume_amt + 0
+        else:
+            var_consume_amt = var_consume_amt + verifydata[idx][19]
+        if verifydata[idx][20] is None:
+            fixed_labor_amt = fixed_labor_amt + 0
+        else:
+            fixed_labor_amt = fixed_labor_amt + verifydata[idx][20]
+        if verifydata[idx][21] is None:
+            mfg_expense_amt = mfg_expense_amt + 0
+        else:
+            mfg_expense_amt = mfg_expense_amt + verifydata[idx][21]
+        if verifydata[idx][22] is None:
+            emp_benefit_amt = emp_benefit_amt + 0
+        else:
+            emp_benefit_amt = emp_benefit_amt + verifydata[idx][22]
+        if verifydata[idx][23] is None:
+            depreciation_amt = depreciation_amt + 0
+        else:
+            depreciation_amt = depreciation_amt + verifydata[idx][23]
+    # print(direct_labor_amt)
+    # print(direct_machine_amt)
+    # print(var_consume_amt)
+    # print(fixed_labor_amt)
+    # print(mfg_expense_amt)
+    # print(emp_benefit_amt)
+    # print(depreciation_amt)
+    exp_direct_labor_amt    = verifydata[len(verifydata)-1][17]
+    exp_direct_machine_amt  = verifydata[len(verifydata)-1][18]
+    exp_var_consume_amt     = verifydata[len(verifydata)-1][19]
+    exp_fixed_labor_amt     = verifydata[len(verifydata)-1][20]
+    exp_mfg_expense_amt     = verifydata[len(verifydata)-1][21]
+    exp_emp_benefit_amt     = verifydata[len(verifydata)-1][22]
+    exp_depreciation_amt    = verifydata[len(verifydata)-1][23]
+    # print(exp_direct_labor_amt)
+    cursor.close()
+    return render_template('verify.html'
+                           , org_list=org_list
+                           , cost_type_list=cost_type_list
+                           , period_list=period_list
+                           , calendar_list=calendar_list
+                           , data_list=verifydata
+                           , direct_labor_amt=direct_labor_amt
+                           , direct_machine_amt=direct_machine_amt
+                           , var_consume_amt=var_consume_amt
+                           , fixed_labor_amt=fixed_labor_amt
+                           , mfg_expense_amt=mfg_expense_amt
+                           , emp_benefit_amt=emp_benefit_amt
+                           , depreciation_amt=depreciation_amt
+                           , exp_direct_labor_amt=exp_direct_labor_amt
+                           , exp_direct_machine_amt=exp_direct_machine_amt
+                           , exp_var_consume_amt=exp_var_consume_amt
+                           , exp_fixed_labor_amt=exp_fixed_labor_amt
+                           , exp_mfg_expense_amt=exp_mfg_expense_amt
+                           , exp_emp_benefit_amt=exp_emp_benefit_amt
+                           , exp_depreciation_amt=exp_depreciation_amt
+                           )
+
 
 if __name__ == '__main__':
     #서버 실행
