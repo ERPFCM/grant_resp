@@ -26,17 +26,24 @@
             /* 사이드바 */
             .sidenav {
               background-color: #f1f1f1;
-<!--              position: fixed;-->
-              width: 200px;
+              width: 250px;
               height: 100%;
               position: fixed;
-              z-index:1;
+<!--              z-index:1;-->
 <!--              margin-left: -20px;-->
 <!--              margin-top:50px-->
+              float: right;
+              top:0;
+              left:0;
+              bottom:0;
+              padding-top:20px;
+              cursor:default;
+              overflow-x:hidden;
+              overflow-y:auto;
             }
             table {
 <!--                position: fixed;-->
-                margin-left: 200px;
+                margin-left: 250px;
             }
             /* 본문 */
             .page {
@@ -61,8 +68,9 @@
     </head>
     <body>
       	<!-- 사이드바 -->
-        <nav class="col-md-2 sidenav">
-            <ul class="nav nav-pills nav-fixed-left">
+        <div class="sidenav">
+<!--        <nav class="col-md-2 sidenav">    -->
+<!--            <ul class="nav nav-pills nav-fixed-left">-->
 <!--        <nav class="sidenav">-->
 <!--          <h4>John's Blog</h4>-->
 <!--          <ul class="nav nav-pills nav-stacked">-->
@@ -158,9 +166,10 @@
             </p>
         </form>
         </div>
-            </ul>
-        </nav>
-        <div style="overflow:scroll;">
+<!--            </ul>-->
+        </div>
+<!--        <div style="overflow:scroll;">-->
+        <div style="ovaerflow:scroll; width: 100%; margin-left:250px">
         <table class="table table-striped">
             <thead>
             <tr>
