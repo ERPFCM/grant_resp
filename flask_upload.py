@@ -108,8 +108,8 @@ def upload_file():
             return item_list
         def account_check(t):
             sql_account_check = """
-            select xga.account_code
-            from xcstf_gl_accounts_v xga
+            select xga.cost_account
+            from xcstf_cost_accounts xga
             , gmf_organization_definitions god
             where 1=1
             and xga.chart_of_accounts_id = god.chart_of_accounts_id
@@ -118,11 +118,36 @@ def upload_file():
             cursor.execute(sql_account_check,t)
             account_list = cursor.fetchall()
             return account_list
+        def dep_account_check(t):
+            sql_account_check = """
+            select xga.cost_account
+            from xcstf_cost_accounts xga
+            , gmf_organization_definitions god
+            where 1=1
+            and xga.chart_of_accounts_id = god.chart_of_accounts_id
+            and xga.cost_cmpntcls_id = 9
+            and god.organization_code = :1
+            """
+            cursor.execute(sql_account_check,t)
+            dep_account_list = cursor.fetchall()
+            return dep_account_list
         def raise_error(sheet_name, line, value):
             cursor.close()
             conn.rollback()
             conn.close()
-            error_msg = "에러가 발생하였습니다. \n" + sheet_name + " 의 " + str(line) + " 번 라인 데이터를 확인하세요.\n에러 발생 데이터 : " + value
+            error_msg = "에러가 발생하였습니다. \n " + sheet_name + " 의 " + str(line) + " 번 라인 데이터를 확인하세요.\n에러 발생 데이터 : " + value
+            return error_msg
+        def raise_dep_account_error(sheet_name, line, value):
+            cursor.close()
+            conn.rollback()
+            conn.close()
+            error_msg = "에러가 발생하였습니다. \n " + sheet_name + " 의 " + str(line) + " 번 라인 데이터를 확인하세요.\n에러 발생 데이터 : " + value
+            return error_msg
+        def raise_not_dep_account_error(sheet_name, line, value):
+            cursor.close()
+            conn.rollback()
+            conn.close()
+            error_msg = "에러가 발생하였습니다. 감가상각비는 Depreciation_Expense에 입력해주세요. \n " + sheet_name + " 의 " + str(line) + " 번 라인 데이터를 확인하세요.\n에러 발생 데이터 : " + value
             return error_msg
         # cursor.execute의 바인드 인자도 튜플이기 때문에 (org,) 와 같이 사용함.
         litem = item_check((org,))
@@ -137,6 +162,11 @@ def upload_file():
         for i in range(len(laccount)):
             account_list.append(laccount[i][0])
         del laccount
+        daccount = dep_account_check((org,))
+        dep_account_list = []
+        for i in range(len(daccount)):
+            dep_account_list.append(daccount[i][0])
+        del daccount
         delete()
         sl = pd.ExcelFile(file_name)
         sheet_name = 'Plan_Order'
@@ -167,6 +197,8 @@ def upload_file():
                     return raise_error(sheet_name, table + 2, row[1])
                 elif (row[4] not in account_list):
                     return raise_error(sheet_name, table + 2, row[4])
+                elif (row[4] in dep_account_list):
+                    return raise_not_dep_account_error(sheet_name, table + 2, row[4])
                 insert_expense((row[0], row[1], row[2], row[3], row[4], row[5]))
             cursor.callproc("XCSTF_BUSINESS_PLAN_PKG.UPLOAD_PLAN_EXPENSE", [org, period, cost_type])
         sheet_name = 'Purchase_Unit_Cost'
@@ -195,8 +227,8 @@ def upload_file():
                     return raise_error(sheet_name, table + 2, row[2])
                 elif (row[1] != cost_type):
                     return raise_error(sheet_name, table + 2, row[1])
-                elif(row[4] not in account_list):
-                    return raise_error(sheet_name, table + 2, row[4])
+                elif(row[4] not in dep_account_list):
+                    return raise_dep_account_error(sheet_name, table + 2, row[4])
                 insert_depreciation((row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
             cursor.callproc("XCSTF_BUSINESS_PLAN_PKG.UPLOAD_PLAN_DEP_EXPENSE", [org, period, cost_type])
         sheet_name = 'Allocation_Items'
@@ -452,7 +484,25 @@ def verify():
                 and    pev.cost_mthd_code = :3
                 and    pev.calendar_code = :4
                 group by pev.organization_id
-                     , pev.cost_cmpntcls_id) 
+                     , pev.cost_cmpntcls_id
+                union all
+                select pde.organization_id, ccm.cost_cmpntcls_id, sum(pde.expense_amount) expense_amount 
+                from xcstf_plan_dep_expenses pde
+                , gmf_organization_definitions god
+                , gmf_period_statuses gps
+                , cm_mthd_mst cmm
+                , cm_cmpt_mst ccm
+                where  1=1
+                and    pde.organization_id = god.organization_id
+                and    cmm.cost_type_id = pde.cost_type_id
+                and    pde.cost_type_id = gps.cost_type_id
+                and    god.organization_code = :1
+                and    gps.period_code = :2
+                and    cmm.cost_mthd_code = :3
+                and    gps.calendar_code = :4
+                and    ccm.cost_cmpntcls_code = '3_감가상각'
+                group by pde.organization_id
+                     , ccm.cost_cmpntcls_id  ) 
     """
     global verify_param
     verify_param = (org, period, cost_type, calendar)
