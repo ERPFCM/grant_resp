@@ -199,11 +199,11 @@ def upload_file():
             df = pd.read_excel(file_name, sheet_name=sheet_name, dtype={'ORG':str, 'ITEM':str, 'PERIOD':str, 'COST_TYPE':str, 'ORDER_QTY':str, 'PART_OF_FACTORY':str})
             # print(df)
             # Item duplication check > DataFrame을 List로 변환하여 check
-            # dup_check = df.duplicated('ITEM').to_list()
-            # item_list = df['ITEM'].to_list()
-            # for rec in range(len(item_list)):
-            #     if dup_check[rec] == True:
-            #         return raise_item_duplicated_error(sheet_name, item_list[rec])
+            dup_check = df.duplicated('ITEM').to_list()
+            item_list = df['ITEM'].to_list()
+            for rec in range(len(item_list)):
+                if dup_check[rec] == True:
+                    return raise_item_duplicated_error(sheet_name, item_list[rec])
             # Data validation
             for table in range(len(df)):
                 row = df.iloc[table]
