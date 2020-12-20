@@ -3,8 +3,8 @@ from flask import Flask, render_template, request, send_file
 from werkzeug.utils import secure_filename
 import xlrd, cx_Oracle, config as cfg, pandas as pd, numpy as np, re, os, time, openpyxl
 app = Flask(__name__)
-os_path_prefix = "D:/python/BusinessExpense/"
-# os_path_prefix = "/usr/tmp/"
+# os_path_prefix = "D:/python/BusinessExpense/"
+os_path_prefix = "/usr/tmp/"
 # export_file_name = ''
 #업로드 HTML 렌더링
 @app.route('/upload')
